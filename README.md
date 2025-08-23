@@ -18,15 +18,15 @@ The LLM-Powered Document Intelligence System is a comprehensive, production-read
 
 ###  Key Features
 
-- ** AI-Powered Processing**: Azure OpenAI GPT-4 Turbo for intelligent data extraction  
-- ** Advanced OCR**: Azure Document Intelligence with 99%+ accuracy  
-- ** Real-time Updates**: WebSocket integration for live processing status  
-- ** Modern Interface**: React 18 + TypeScript + Material-UI  
-- ** High Performance**: Async/await architecture with connection pooling  
-- ** Enterprise Security**: JWT authentication, secure containers, role-based access  
-- ** Production Monitoring**: Prometheus metrics, Grafana dashboards  
-- **🐳 Container-Ready**: Multi-stage Docker builds, orchestration  
-- ** CI/CD Pipeline**: Automated testing, security scans, deployment
+- **AI-Powered Processing**: Azure OpenAI GPT-4 Turbo for intelligent data extraction  
+- **Advanced OCR**: Azure Document Intelligence with 99%+ accuracy  
+- **Real-time Updates**: WebSocket integration for live processing status  
+- **Modern Interface**: React 18 + TypeScript + Material-UI  
+- **High Performance**: Async/await architecture with connection pooling  
+- **Enterprise Security**: JWT authentication, secure containers, role-based access  
+- **Production Monitoring**: Prometheus metrics, Grafana dashboards  
+- **🐳Container-Ready**: Multi-stage Docker builds, orchestration  
+- **CI/CD Pipeline**: Automated testing, security scans, deployment
 
 ---
 
