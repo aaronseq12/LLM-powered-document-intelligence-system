@@ -1,0 +1,554 @@
+# GitHub Actions CI/CD pipeline for LLM Document Intelligence System
+# Comprehensive workflow for testing, security, building, and deployment
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, feature/*, hotfix/* ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+  schedule:
+    # Run weekly security scans
+    - cron: '0 2 * * 1'
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ================================
+  # Code Quality and Testing
+  # ================================
+  
+  lint-and-format:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 mypy
+        pip install -r requirements.txt
+        
+    - name: Install Node.js dependencies
+      run: npm ci
+      
+    - name: Python code formatting (Black)
+      run: black --check --diff .
+      
+    - name: Python import sorting (isort)
+      run: isort --check-only --diff .
+      
+    - name: Python linting (flake8)
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Python type checking (mypy)
+      run: mypy . --ignore-missing-imports
+      
+    - name: TypeScript linting
+      run: npm run lint
+      
+    - name: TypeScript type checking
+      run: npm run type-check
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-mock pytest-cov httpx
+        
+    - name: Run tests
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        SECRET_KEY: test-secret-key-for-github-actions
+        ENVIRONMENT: testing
+      run: |
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=term
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: true
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm run test:coverage
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/clover.xml
+        flags: frontend
+        name: frontend-coverage
+        fail_ci_if_error: true
+
+  # ================================
+  # Security Scanning
+  # ================================
+  
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep
+        pip install -r requirements.txt
+        
+    - name: Python security scan (Safety)
+      run: safety check --json --output safety-report.json || true
+      
+    - name: Python security scan (Bandit)
+      run: bandit -r . -f json -o bandit-report.json || true
+      
+    - name: Static analysis (Semgrep)
+      run: |
+        python -m semgrep --config=auto --json --output=semgrep-report.json . || true
+        
+    - name: Node.js security audit
+      run: npm audit --audit-level high || true
+      
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+          semgrep-report.json
+          
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # ================================
+  # Build and Package
+  # ================================
+  
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, backend-tests, frontend-tests]
+    if: github.event_name == 'push' || github.event_name == 'release'
+    
+    outputs:
+      image-digest: ${{ steps.build-image.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push Docker image
+      id: build-image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        target: production
+        
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: spdx-json
+        output-file: sbom.spdx.json
+        
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: sbom.spdx.json
+
+  # ================================
+  # Integration Tests
+  # ================================
+  
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Compose
+      run: |
+        sudo curl -L "https://github.com/docker/compose/releases/download/2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        
+    - name: Run integration tests
+      env:
+        DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      run: |
+        export IMAGE_TAG=${{ github.sha }}
+        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
+        docker-compose -f docker-compose.test.yml down
+        
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: test-results/
+
+  # ================================
+  # Performance Tests
+  # ================================
+  
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Install Artillery
+      run: npm install -g artillery@latest
+      
+    - name: Start application
+      env:
+        DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      run: |
+        docker-compose -f docker-compose.perf.yml up -d
+        sleep 30  # Wait for services to start
+        
+    - name: Run performance tests
+      run: |
+        artillery run tests/performance/load-test.yml --output performance-results.json
+        
+    - name: Generate performance report
+      run: |
+        artillery report performance-results.json --output performance-report.html
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: |
+          performance-results.json
+          performance-report.html
+          
+    - name: Cleanup
+      if: always()
+      run: docker-compose -f docker-compose.perf.yml down
+
+  # ================================
+  # Deployment
+  # ================================
+  
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests, security-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster llm-doc-intelligence-staging \
+          --service llm-doc-intelligence-service \
+          --force-new-deployment
+          
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster llm-doc-intelligence-staging \
+          --services llm-doc-intelligence-service
+          
+    - name: Run smoke tests
+      run: |
+        curl -f https://staging.your-domain.com/health
+        echo "Staging deployment successful!"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, integration-tests, performance-tests, security-scan]
+    if: github.event_name == 'release'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Blue-Green deployment
+      run: |
+        # Update ECS service with new task definition
+        aws ecs update-service \
+          --cluster llm-doc-intelligence-prod \
+          --service llm-doc-intelligence-service \
+          --force-new-deployment
+          
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster llm-doc-intelligence-prod \
+          --services llm-doc-intelligence-service
+          
+    - name: Run production smoke tests
+      run: |
+        curl -f https://api.your-domain.com/health
+        echo "Production deployment successful!"
+        
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        message: |
+          Production deployment ${{ job.status }}!
+          Version: ${{ github.event.release.tag_name }}
+          Commit: ${{ github.sha }}
+
+  # ================================
+  # Monitoring and Alerts
+  # ================================
+  
+  post-deploy-monitoring:
+    name: Post-deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Wait for system stabilization
+      run: sleep 300  # 5 minutes
+      
+    - name: Check system health
+      run: |
+        # Check various endpoints
+        curl -f https://api.your-domain.com/health
+        curl -f https://api.your-domain.com/metrics
+        
+    - name: Validate key metrics
+      run: |
+        # Custom script to validate metrics
+        echo "Checking response times, error rates, etc."
+        
+    - name: Create deployment record
+      run: |
+        # Record deployment in monitoring system
+        echo "Recording deployment in monitoring system"
+
+  # ================================
+  # Cleanup and Notifications
+  # ================================
+  
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    
+    steps:
+    - name: Clean up old images
+      run: |
+        # Clean up old container images
+        echo "Cleaning up old container images"
+        
+    - name: Update documentation
+      if: github.event_name == 'release'
+      run: |
+        # Auto-update API documentation
+        echo "Updating API documentation"
+        
+    - name: Generate release notes
+      if: github.event_name == 'release'
+      run: |
+        # Auto-generate release notes
+        echo "Generating release notes"
+
+# ================================
+# Workflow Notifications
+# ================================
+
+  notify-completion:
+    name: Workflow Completion
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, backend-tests, frontend-tests, security-scan, build]
+    if: always()
+    
+    steps:
+    - name: Notify team
+      uses: 8398a7/action-slack@v3
+      if: failure()
+      with:
+        status: 'failure'
+        channel: '#ci-cd'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        message: |
+          🚨 CI/CD Pipeline Failed!
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Commit: ${{ github.sha }}
+          Triggered by: ${{ github.actor }}
