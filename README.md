@@ -1,6 +1,5 @@
-# 🤖 LLM-Powered Document Intelligence System
+# LLM-Powered Document Intelligence System
 
-[![CI/CD Pipeline](https://github.com/aaronseq12/LLM-powered-document-intelligence-system/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/aaronseq12/LLM-powered-document-intelligence-system/actions/workflows/ci-cd.yml)
 [![Coverage](https://codecov.io/gh/aaronseq12/LLM-powered-document-intelligence-system/branch/main/graph/badge.svg)](https://codecov.io/gh/aaronseq12/LLM-powered-document-intelligence-system)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=llm-doc-intelligence&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=llm-doc-intelligence)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -11,23 +10,23 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 The LLM-Powered Document Intelligence System is a comprehensive, production-ready platform that revolutionizes document processing using **Azure AI services**, **Large Language Models**, and **modern web technologies**. Designed for scalability, security, and performance, it processes thousands of documents per hour with 95%+ accuracy.
 
 ---
 
-### 🎯 Key Features
+###  Key Features
 
-- **🤖 AI-Powered Processing**: Azure OpenAI GPT-4 Turbo for intelligent data extraction  
-- **📄 Advanced OCR**: Azure Document Intelligence with 99%+ accuracy  
-- **🔔 Real-time Updates**: WebSocket integration for live processing status  
-- **🎨 Modern Interface**: React 18 + TypeScript + Material-UI  
-- **⚡ High Performance**: Async/await architecture with connection pooling  
-- **🔒 Enterprise Security**: JWT authentication, secure containers, role-based access  
-- **📊 Production Monitoring**: Prometheus metrics, Grafana dashboards  
+- ** AI-Powered Processing**: Azure OpenAI GPT-4 Turbo for intelligent data extraction  
+- ** Advanced OCR**: Azure Document Intelligence with 99%+ accuracy  
+- ** Real-time Updates**: WebSocket integration for live processing status  
+- ** Modern Interface**: React 18 + TypeScript + Material-UI  
+- ** High Performance**: Async/await architecture with connection pooling  
+- ** Enterprise Security**: JWT authentication, secure containers, role-based access  
+- ** Production Monitoring**: Prometheus metrics, Grafana dashboards  
 - **🐳 Container-Ready**: Multi-stage Docker builds, orchestration  
-- **🚀 CI/CD Pipeline**: Automated testing, security scans, deployment
+- ** CI/CD Pipeline**: Automated testing, security scans, deployment
 
 ---
 
