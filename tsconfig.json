@@ -1,113 +1,47 @@
 {
   "compilerOptions": {
+    // --- Basic Options ---
     "target": "ES2020",
-    "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "skipLibCheck": true,
-    "allowJs": false,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
     "jsx": "react-jsx",
+    "noEmit": true,
+    "isolatedModules": true,
 
-    /* Linting */
+    // --- Strict Type-Checking Options ---
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
-    /* Advanced */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/pages/*": ["src/pages/*"],
-      "@/hooks/*": ["src/hooks/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/services/*": ["src/services/*"],
-      "@/types/*": ["src/types/*"],
-      "@/styles/*": ["src/styles/*"],
-      "@/assets/*": ["src/assets/*"],
-      "@/contexts/*": ["src/contexts/*"],
-      "@/store/*": ["src/store/*"],
-      "@/constants/*": ["src/constants/*"]
-    },
-
-    /* Type checking */
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": false,
-    "declarationMap": false,
-    "sourceMap": true,
-
-    /* Experimental */
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-
-    /* Additional strict checks */
     "noImplicitAny": true,
-    "noImplicitThis": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
+    "noImplicitThis": true,
     "alwaysStrict": true,
 
-    /* Module resolution */
-    "typeRoots": ["node_modules/@types", "src/types"],
-    "types": ["vite/client", "node", "@testing-library/jest-dom"],
+    // --- Additional Checks ---
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
 
-    /* Performance */
-    "incremental": true,
-    "tsBuildInfoFile": ".tsbuildinfo",
+    // --- Module Resolution Options ---
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
 
-    /* Output */
-    "outDir": "dist",
-    "rootDir": "src",
-    "removeComments": true,
-    "preserveConstEnums": true,
+    // --- Interoperability Options ---
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
 
-    /* Interop Constraints */
-    "verbatimModuleSyntax": false
+    // --- Other Options ---
+    "skipLibCheck": true
   },
-  "include": [
-    "src/**/*",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*",
-    "vite.config.ts",
-    "vitest.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "coverage",
-    "public",
-    "*.config.js",
-    "*.config.ts",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
-  ],
-  "references": [
-    { "path": "./tsconfig.node.json" }
-  ],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  }
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
+
