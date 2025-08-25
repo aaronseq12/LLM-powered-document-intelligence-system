@@ -1,8 +1,9 @@
 <div align="center">
+<img src="https://user-images.githubusercontent.com/80155111/285848522-5b37452a-289a-47e6-a2b1-5b39c6e9b068.png" alt="Project Banner" width="800"/>
 
 # LLM-Powered Document Intelligence System
 
-**An enterprise-grade platform for intelligent document processing, leveraging Azure AI and a modern cloud-native architecture.**
+An enterprise-grade platform for intelligent document processing, leveraging Azure AI and a modern cloud-native architecture.
 
 </div>
 
@@ -16,6 +17,9 @@
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
   </a>
+  <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/releases">
+    <img src="https://img.shields.io/github/v/release/aaronseq12/LLM-powered-document-intelligence-system?logo=github" alt="Latest Release">
+  </a>
 </p>
 
 <p align="center">
@@ -25,81 +29,52 @@
   <a href="https://pypi.org/project/llm-document-intelligence/">
     <img src="https://img.shields.io/pypi/v/llm-document-intelligence?logo=python" alt="PyPI Version">
   </a>
-  <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system">
-    <img src="https://img.shields.io/github/languages/top/aaronseq12/LLM-powered-document-intelligence-system?logo=python" alt="Language">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/prettier/prettier">
-    <img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?logo=prettier" alt="Code Style: Prettier">
-  </a>
-  <a href="https://eslint.org/">
-    <img src="https://img.shields.io/badge/linting-ESLint-4B32C3?logo=eslint" alt="Linting: ESLint">
-  </a>
-  <a href="https://github.com/psf/black">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg?logo=python" alt="Code Style: Black">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/releases">
-    <img src="https://img.shields.io/github/v/release/aaronseq12/LLM-powered-document-intelligence-system?logo=github" alt="Latest Release">
-  </a>
-  <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/issues">
-    <img src="https://img.shields.io/github/issues/aaronseq12/LLM-powered-document-intelligence-system?logo=github" alt="Issues">
-  </a>
   <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/stargazers">
-    <img src="https://img.shields.io/github/stars/aaronseq12/LLM-powered-document-intelligence-system?logo=github" alt="Stars">
+    <img src="https://img.shields.io/github/stars/aaronseq12/LLM-powered-document-intelligence-system?style=social" alt="Stars">
+  </a>
+  <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/forks">
+    <img src="https://img.shields.io/github/forks/aaronseq12/LLM-powered-document-intelligence-system?style=social" alt="Forks">
   </a>
 </p>
 
----
+## 📖 Table of Contents
 
-## ðŸ“– Table of Contents
+- [✨ Overview](#-overview)
+- [🎯 Key Features](#-key-features)
+- [🏛️ System Architecture](#️-system-architecture)
+- [🚀 Getting Started](#-getting-started)
+- [📂 Project Structure](#-project-structure)
+- [⚙️ Configuration](#️-configuration)
+- [🛠️ Development & Operations](#️-development--operations)
+- [🔗 API Endpoints](#-api-endpoints)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
 
-- [âœ¨ Overview](#-overview)
-- [ðŸŽ¯ Key Features](#-key-features)
-- [ðŸ—ï¸ System Architecture](#-system-architecture)
-- [ðŸš€ Getting Started](#-getting-started)
-- [ðŸ“ Project Structure](#-project-structure)
-- [âš™ï¸ Configuration](#ï¸-configuration)
-- [ðŸ› ï¸ Development & Operations](#ï¸-development--operations)
-- [ðŸ”Œ API Endpoints](#-api-endpoints)
-- [ðŸ¤ Contributing](#-contributing)
-- [ðŸ“œ License](#-license)
+## ✨ Overview
 
----
+This project is a comprehensive, production-ready platform designed to revolutionize document processing. By integrating Azure AI services, Large Language Models (LLMs), and modern web technologies, it provides a scalable, secure, and high-performance solution for extracting intelligent insights from your documents.
 
-## âœ¨ Overview
+## 🎯 Key Features
 
-This project is a comprehensive, production-ready platform designed to revolutionize document processing. By integrating **Azure AI services**, **Large Language Models (LLMs)**, and **modern web technologies**, it provides a scalable, secure, and high-performance solution for extracting intelligent insights from your documents.
+| Feature | Description | Technology Stack |
+|---------|-------------|------------------|
+| 🧠 **AI-Powered Engine** | Utilizes GPT-4 Turbo for contextual understanding and intelligent data extraction from unstructured text. | Azure OpenAI, LangChain |
+| 📄 **Advanced OCR** | Achieves high-accuracy text extraction for diverse document types and layouts. | Azure Document Intelligence |
+| ⚡ **Real-time Updates** | Live status tracking of document processing via a persistent WebSocket connection. | WebSockets, FastAPI |
+| 🖥️ **Modern Interface** | A responsive and intuitive user interface built for a seamless user experience. | React 18, TypeScript, Material-UI |
+| 💨 **High Performance** | Asynchronous architecture and connection pooling ensure low latency and high throughput. | Async/await, Connection Pooling |
+| 🛡️ **Enterprise Security** | Implements robust security protocols including JWT and secure infrastructure practices. | JWT, OAuth2, Secure Containers |
+| 🐳 **Container-Ready** | Multi-stage Docker builds and Compose configurations for consistent, reproducible deployments. | Docker, Docker Compose |
+| 🔄 **CI/CD Automation** | Fully automated pipeline for testing, security scanning, and deploying to various environments. | GitHub Actions |
 
----
-
-## ðŸŽ¯ Key Features
-
-| Feature                  | Description                                                                                           | Technology Stack                        |
-| ------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| **ðŸ¤– AI-Powered Engine** | Utilizes GPT-4 Turbo for contextual understanding and intelligent data extraction from unstructured text. | Azure OpenAI, LangChain                 |
-| **ðŸ“„ Advanced OCR**      | Achieves high-accuracy text extraction for diverse document types and layouts.                        | Azure Document Intelligence             |
-| **âš¡ Real-time Updates** | Live status tracking of document processing via a persistent WebSocket connection.                    | WebSockets, FastAPI                     |
-| **ðŸ–¥ï¸ Modern Interface**  | A responsive and intuitive user interface built for a seamless user experience.                       | React 18, TypeScript, Material-UI       |
-| **ðŸš€ High Performance**  | Asynchronous architecture and connection pooling ensure low latency and high throughput.              | Async/await, Connection Pooling         |
-| **ðŸ›¡ï¸ Enterprise Security** | Implements robust security protocols including JWT and secure infrastructure practices.              | JWT, OAuth2, Secure Containers          |
-| **ðŸ³ Container-Ready**   | Multi-stage Docker builds and Compose configurations for consistent, reproducible deployments.         | Docker, Docker Compose                  |
-| **ðŸ”„ CI/CD Automation**  | Fully automated pipeline for testing, security scanning, and deploying to various environments.        | GitHub Actions                          |
-
----
-
-## ðŸ—ï¸ System Architecture
+## 🏛️ System Architecture
 
 The system follows a microservices-oriented architecture, ensuring separation of concerns, scalability, and maintainability.
 
 <details>
-<summary><strong>â–¶ï¸ View Architecture Diagram</strong></summary>
+<summary><strong>▶️ View Architecture Diagram</strong></summary>
 
-```mermaid
+```
 graph TD
     subgraph "Client Layer"
         A[React App] --> B[API Gateway]
@@ -118,35 +93,34 @@ graph TD
         C --> I[File Storage]
     end
 ```
+
 </details>
 
----
-
-## ðŸš€ Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- **Python 3.11+** ðŸ
-- **Node.js 18+** âš¡
-- **Docker & Docker Compose** ðŸ³
-- **Azure account** with AI Services access â˜ï¸
 
-### âš¡ One-Command Quick Start
+- Python 3.11+ 🐍
+- Node.js 18+ ⚡
+- Docker & Docker Compose 🐳
+- Azure account with AI Services access ☁️
+
+### ⚡ One-Command Quick Start
+
 This single command clones the repository, sets up the environment, builds containers, and launches the entire application stack.
 
-```bash
+```
 git clone https://github.com/aaronseq12/LLM-powered-document-intelligence-system.git
 cd LLM-powered-document-intelligence-system
 make quick-start
 ```
 
----
-
 ### Manual Setup Instructions
 
 <details>
-<summary><strong>â–¶ï¸ View Manual Setup Steps</strong></summary>
+<summary><strong>▶️ View Manual Setup Steps</strong></summary>
 
-```bash
+```
 # Install Dependencies
 make install-backend
 make install-frontend
@@ -165,11 +139,9 @@ make dev
 
 </details>
 
----
+### 🐳 Docker Installation
 
-### ðŸ³ Docker Installation
-
-```bash
+```
 # Pull the latest images
 docker pull aaronseq12/llm-document-intelligence:latest
 
@@ -177,11 +149,9 @@ docker pull aaronseq12/llm-document-intelligence:latest
 docker-compose up -d
 ```
 
----
+### 📦 PyPI Installation (Backend Package)
 
-### ðŸ“¦ PyPI Installation (Backend Package)
-
-```bash
+```
 # Install the core processing engine
 pip install llm-document-intelligence
 
@@ -190,54 +160,49 @@ from llm_document_intelligence import DocumentProcessor
 processor = DocumentProcessor(azure_key="your-key")
 ```
 
----
-
 ### Access Points
-- **Frontend Application:** http://localhost:3000 ðŸ–¥ï¸
-- **Backend API:** http://localhost:8000 ðŸ”§
-- **Interactive API Docs:** http://localhost:8000/docs ðŸ“š
 
----
+- **Frontend Application:** http://localhost:3000 🖥️
+- **Backend API:** http://localhost:8000 ⚙️
+- **Interactive API Docs:** http://localhost:8000/docs 📚
 
-## ðŸ“ Project Structure
+## 📂 Project Structure
 
 The repository is organized into distinct modules for the backend, frontend, and infrastructure, promoting a clean and scalable codebase.
 
 <details>
-<summary><strong>â–¶ï¸ View Directory Tree</strong></summary>
+<summary><strong>▶️ View Directory Tree</strong></summary>
 
 ```
 LLM-powered-document-intelligence-system/
-â”œâ”€â”€ backend/                 # Python/FastAPI application
-â”‚   â”œâ”€â”€ main.py              # API application entry point
-â”‚   â”œâ”€â”€ llm_service.py       # Core logic for LangChain & Azure OpenAI
-â”‚   â”œâ”€â”€ database.py          # SQLAlchemy models and DB session
-â”‚   â””â”€â”€ requirements.txt     # Python dependencies
-â”‚
-â”œâ”€â”€ frontend/                # React/TypeScript application
-â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”œâ”€â”€ components/      # Reusable UI components
-â”‚   â”‚   â”œâ”€â”€ pages/           # Application pages/routes
-â”‚   â”‚   â””â”€â”€ services/        # API communication layer
-â”‚   â”œâ”€â”€ vite.config.ts       # Vite build configuration
-â”‚   â””â”€â”€ ...
-â”‚
-â”œâ”€â”€ docker-compose.yml       # Defines services, networks, and volumes
-â”œâ”€â”€ Dockerfile.backend       # Multi-stage build for the FastAPI app
-â”œâ”€â”€ Dockerfile.frontend      # Multi-stage build for the React app
-â”œâ”€â”€ Makefile                 # Automation scripts for setup and operations
-â””â”€â”€ .env.example             # Template for environment variables
+├── backend/                 # Python/FastAPI application
+│   ├── main.py              # API application entry point
+│   ├── llm_service.py       # Core logic for LangChain & Azure OpenAI
+│   ├── database.py          # SQLAlchemy models and DB session
+│   └── requirements.txt     # Python dependencies
+│
+├── frontend/                # React/TypeScript application
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   ├── pages/           # Application pages/routes
+│   │   └── services/        # API communication layer
+│   ├── vite.config.ts       # Vite build configuration
+│   └── ...
+│
+├── docker-compose.yml       # Defines services, networks, and volumes
+├── Dockerfile.backend       # Multi-stage build for the FastAPI app
+├── Dockerfile.frontend      # Multi-stage build for the React app
+├── Makefile                 # Automation scripts for setup and operations
+└── .env.example             # Template for environment variables
 ```
 
 </details>
 
----
-
-## âš™ï¸ Configuration
+## ⚙️ Configuration
 
 Configuration is managed via environment variables. Copy the `.env.example` file to `.env` and populate it with your specific settings:
 
-```bash
+```
 # Azure AI Configuration
 AZURE_OPENAI_API_KEY=your_openai_key
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
@@ -251,11 +216,9 @@ REDIS_URL=redis://localhost:6379
 JWT_SECRET_KEY=your_super_secure_key_here
 ```
 
----
+## 🛠️ Development & Operations
 
-## ðŸ› ï¸ Development & Operations
-
-A `Makefile` is included to streamline common development and operational tasks:
+A Makefile is included to streamline common development and operational tasks:
 
 | Command | Description |
 |---------|-------------|
@@ -267,75 +230,69 @@ A `Makefile` is included to streamline common development and operational tasks:
 | `make lint` | Lints and formats codebase |
 | `make security-scan` | Runs security vulnerability checks |
 
----
+## 🔗 API Endpoints
 
-## ðŸ”Œ API Endpoints
-
-The backend exposes a RESTful API for document management and processing. Interactive documentation is available via **Swagger UI**.
+The backend exposes a RESTful API for document management and processing. Interactive documentation is available via Swagger UI.
 
 ### Document Processing
-- `POST /upload` â†’ Upload a new document for processing  
-- `GET /documents/{doc_id}` â†’ Retrieve status and extracted data  
-- `GET /documents` â†’ List all processed documents  
-- `DELETE /documents/{doc_id}` â†’ Delete a document  
+- `POST /upload` → Upload a new document for processing
+- `GET /documents/{doc_id}` → Retrieve status and extracted data
+- `GET /documents` → List all processed documents
+- `DELETE /documents/{doc_id}` → Delete a document
 
 ### Real-time Features
-- `WS /ws/{doc_id}` â†’ WebSocket for real-time status updates  
+- `WS /ws/{doc_id}` → WebSocket for real-time status updates
 
 ### Health & Monitoring
-- `GET /health` â†’ System health check  
-- `GET /metrics` â†’ Prometheus-compatible metrics  
+- `GET /health` → System health check
+- `GET /metrics` → Prometheus-compatible metrics
 
----
-
-## ðŸ¤ Contributing
+## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Quick Start for Contributors
 
-1. **Fork** the Project  
-2. **Create** your Feature Branch (`git checkout -b feature/AmazingFeature`)  
-3. **Commit** your Changes (`git commit -m 'Add some AmazingFeature'`)  
-4. **Push** to the Branch (`git push origin feature/AmazingFeature`)  
-5. **Open** a Pull Request  
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ### Development Standards
-- âœ… **Code Style:** Prettier + ESLint (Frontend), Black + isort (Backend)  
-- âœ… **Testing:** Minimum 80% code coverage required  
-- âœ… **Documentation:** All public functions must be documented  
-- âœ… **Type Safety:** TypeScript (Frontend), Type hints (Backend)  
 
----
+- ✅ **Code Style:** Prettier + ESLint (Frontend), Black + isort (Backend)
+- ✅ **Testing:** Minimum 80% code coverage required
+- ✅ **Documentation:** All public functions must be documented
+- ✅ **Type Safety:** TypeScript (Frontend), Type hints (Backend)
 
-## ðŸ“ˆ Performance Metrics
+## 📊 Performance Metrics
 
-- **Processing Speed:** ~2-5 seconds per document (average)  
-- **Accuracy:** 95%+ OCR accuracy on standard documents  
-- **Concurrent Users:** Supports 100+ simultaneous connections  
-- **Uptime:** 99.9% availability target  
+- **Processing Speed:** ~2-5 seconds per document (average)
+- **Accuracy:** 95%+ OCR accuracy on standard documents
+- **Concurrent Users:** Supports 100+ simultaneous connections
+- **Uptime:** 99.9% availability target
 
----
+## 🛡️ Security
 
-## ðŸ›¡ï¸ Security
+- **Authentication:** JWT-based with refresh tokens
+- **Data Encryption:** AES-256 for data at rest, TLS 1.3 for data in transit
+- **Access Control:** Role-based permissions (RBAC)
+- **Audit Logging:** Comprehensive activity tracking
 
-- **Authentication:** JWT-based with refresh tokens  
-- **Data Encryption:** AES-256 for data at rest, TLS 1.3 for data in transit  
-- **Access Control:** Role-based permissions (RBAC)  
-- **Audit Logging:** Comprehensive activity tracking  
+## 📜 License
 
----
-
-## ðŸ“œ License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-### ðŸŒŸ Star this repo if you find it useful!
+⭐ **Star this repo if you find it useful!**
 
-**Made with â¤ï¸ by the Document Intelligence Team**
+Made with ❤️ by the Document Intelligence Team
 
 </div>
+```
+
+This is the complete markdown code for your README.md file. Save it as `README.md` in your repository root directory.
+
+[1](https://www.google.com/search?q=https%3A%2F%2Fuser-images.githubusercontent.com%2F80155111%2F285848522-5b37452a-289a-47e6-a2b1-5b39)
