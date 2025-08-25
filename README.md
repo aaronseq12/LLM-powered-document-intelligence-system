@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://user-images.githubusercontent.com/80155111/285848522-5b37452a-289a-47e6-a2b1-5b39c6e9b068.png" alt="Project Banner" width="800"/>
+<img src="[https://user-images.githubusercontent.com/80155111/285848522-5b37452a-289a-47e6-a2b1-5b39c6e9b068.png](https://www.leewayhertz.com/intelligent-document-processing-idp/)" alt="Project Banner" width="800"/>
 
 # LLM-Powered Document Intelligence System
 
