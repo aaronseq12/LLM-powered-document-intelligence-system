@@ -1,49 +1,47 @@
 """
-FastAPI application for LLM-powered document intelligence system.
-Advanced FastAPI app with WebSocket support, authentication, and document processing.
+Main FastAPI Application for the LLM Document Intelligence System
+
+This file defines the core FastAPI application, including its routes, middleware,
+and lifecycle events. It serves as the main entry point for the backend API.
+
+Key Components:
+- FastAPI app initialization and configuration.
+- API endpoints for health checks, authentication, and document processing.
+- WebSocket endpoint for real-time communication.
+- Background tasks for asynchronous document processing.
 """
 
-import asyncio
 import logging
-import os
 from contextlib import asynccontextmanager
-from typing import Dict, List, Optional
+from typing import Dict
+from datetime import datetime
+import json
+import os
 
-import uvicorn
 from fastapi import (
-    FastAPI, File, Form, HTTPException, Depends, status, WebSocket,
+    FastAPI, File, Form, HTTPException, Depends, WebSocket,
     WebSocketDisconnect, UploadFile, BackgroundTasks
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-import jwt
-from datetime import datetime, timedelta
-import json
+from fastapi.security import HTTPBearer
+from pydantic import BaseModel
 
 from config import settings
-from database import get_db, create_tables, engine
-from llm_service import LLMService
-from azure_document_intelligence import AzureDocumentIntelligence
+from database import get_db_session, initialize_database
+from llm_service import llm_service
+from azure_document_intelligence import azure_document_intelligence_service
 from redis_client import redis_client
+from auth import create_access_token, get_current_user
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# --- Logging Configuration ---
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Security
-security = HTTPBearer()
-
-# WebSocket connection manager
+# --- WebSocket Connection Manager ---
 class ConnectionManager:
+    """Manages active WebSocket connections."""
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -52,80 +50,45 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
     async def broadcast(self, message: str):
         for connection in self.active_connections:
-            try:
-                await connection.send_text(message)
-            except Exception as e:
-                logger.error(f"Error broadcasting message: {e}")
+            await connection.send_text(message)
 
-manager = ConnectionManager()
+connection_manager = ConnectionManager()
 
-# Pydantic models
-class DocumentProcessRequest(BaseModel):
-    document_id: str
-    extraction_type: str = Field(..., description="Type of extraction: 'structured', 'unstructured', or 'hybrid'")
-    language: Optional[str] = Field(default="en", description="Document language code")
-    confidence_threshold: Optional[float] = Field(default=0.8, description="Minimum confidence score")
-
-class DocumentProcessResponse(BaseModel):
-    document_id: str
-    status: str
-    extracted_data: Dict
-    confidence_score: float
-    processing_time: float
-    metadata: Dict
-
+# --- Pydantic Models for API Requests and Responses ---
 class HealthResponse(BaseModel):
     status: str
     version: str
     timestamp: datetime
-    dependencies: Dict[str, str]
-
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Initialize services
-llm_service = LLMService()
-azure_doc_intelligence = AzureDocumentIntelligence()
-
+# --- Application Lifecycle Events ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan events"""
-    # Startup
-    logger.info("Starting up LLM Document Intelligence System")
-    await create_tables()
+    """Handles application startup and shutdown events."""
+    logger.info("Starting up the LLM Document Intelligence System...")
+    await initialize_database()
     await redis_client.connect()
     await llm_service.initialize()
-    await azure_doc_intelligence.initialize()
+    await azure_document_intelligence_service.initialize()
     
     yield
     
-    # Shutdown
-    logger.info("Shutting down LLM Document Intelligence System")
+    logger.info("Shutting down...")
     await redis_client.disconnect()
-    await engine.dispose()
 
-# FastAPI app initialization
+# --- FastAPI App Initialization ---
 app = FastAPI(
     title="LLM-Powered Document Intelligence System",
-    description="Enterprise-grade document processing with AI-powered extraction",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/api/docs" if settings.ENVIRONMENT != "production" else None,
-    redoc_url="/api/redoc" if settings.ENVIRONMENT != "production" else None,
 )
 
-# Middleware
+# --- Middleware ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -134,305 +97,106 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=settings.ALLOWED_HOSTS,
-)
+# --- API Endpoints ---
 
-# Authentication functions
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
-    try:
-        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except jwt.PyJWTError:
-        raise credentials_exception
-    
-    return username
-
-# Health check endpoint
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint for monitoring"""
-    dependencies = {
-        "database": "healthy",
-        "redis": "healthy" if await redis_client.ping() else "unhealthy",
-        "llm_service": "healthy" if await llm_service.health_check() else "unhealthy",
-        "azure_doc_intelligence": "healthy" if await azure_doc_intelligence.health_check() else "unhealthy"
-    }
-    
+    """Provides a health check endpoint for monitoring."""
     return HealthResponse(
-        status="healthy",
+        status="ok",
         version="1.0.0",
-        timestamp=datetime.utcnow(),
-        dependencies=dependencies
+        timestamp=datetime.utcnow()
     )
-
-# Authentication endpoints
-@app.post("/auth/register", response_model=Token)
-async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    """Register a new user"""
-    # Implementation would include user creation in database
-    # This is a simplified version
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/auth/login", response_model=Token)
 async def login(username: str = Form(...), password: str = Form(...)):
-    """Login user and return access token"""
-    # Implementation would include user authentication
-    # This is a simplified version
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": username}, expires_delta=access_token_expires
-    )
+    """Authenticates a user and returns a JWT access token."""
+    # In a real application, you would verify the username and password here.
+    access_token = create_access_token(data={"sub": username})
     return {"access_token": access_token, "token_type": "bearer"}
 
-# Document processing endpoints
-@app.post("/api/documents/upload", response_model=Dict[str, str])
+@app.post("/api/documents/upload")
 async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    extraction_type: str = Form(default="hybrid"),
-    language: str = Form(default="en"),
-    confidence_threshold: float = Form(default=0.8),
     current_user: str = Depends(get_current_user)
 ):
-    """Upload and queue document for processing"""
+    """Uploads a document and queues it for asynchronous processing."""
     try:
-        # Generate unique document ID
         document_id = f"doc_{datetime.utcnow().timestamp()}"
+        file_path = os.path.join(settings.UPLOAD_DIRECTORY, f"{document_id}_{file.filename}")
         
-        # Save file temporarily
-        file_path = f"/tmp/{document_id}_{file.filename}"
         with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+            buffer.write(await file.read())
         
-        # Queue processing task
         background_tasks.add_task(
-            process_document_async,
+            process_document_in_background,
             document_id,
             file_path,
-            extraction_type,
-            language,
-            confidence_threshold,
             current_user
         )
         
-        return {
-            "document_id": document_id,
-            "status": "queued",
-            "message": "Document uploaded successfully and queued for processing"
-        }
+        return {"document_id": document_id, "status": "queued"}
         
     except Exception as e:
         logger.error(f"Error uploading document: {e}")
-        raise HTTPException(status_code=500, detail="Failed to upload document")
-
-@app.post("/api/documents/process", response_model=DocumentProcessResponse)
-async def process_document(
-    request: DocumentProcessRequest,
-    current_user: str = Depends(get_current_user)
-):
-    """Process document with specified parameters"""
-    try:
-        start_time = datetime.utcnow()
-        
-        # Check if result is cached
-        cache_key = f"doc_result:{request.document_id}"
-        cached_result = await redis_client.get(cache_key)
-        
-        if cached_result:
-            logger.info(f"Returning cached result for document {request.document_id}")
-            return json.loads(cached_result)
-        
-        # Process document with Azure Document Intelligence
-        azure_result = await azure_doc_intelligence.analyze_document(
-            document_id=request.document_id,
-            extraction_type=request.extraction_type,
-            language=request.language
-        )
-        
-        # Enhance with LLM processing
-        llm_result = await llm_service.enhance_extraction(
-            azure_result,
-            extraction_type=request.extraction_type,
-            confidence_threshold=request.confidence_threshold
-        )
-        
-        processing_time = (datetime.utcnow() - start_time).total_seconds()
-        
-        response = DocumentProcessResponse(
-            document_id=request.document_id,
-            status="completed",
-            extracted_data=llm_result["data"],
-            confidence_score=llm_result["confidence"],
-            processing_time=processing_time,
-            metadata={
-                "extraction_type": request.extraction_type,
-                "language": request.language,
-                "processed_by": current_user,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        )
-        
-        # Cache result for 1 hour
-        await redis_client.set(cache_key, response.json(), ex=3600)
-        
-        return response
-        
-    except Exception as e:
-        logger.error(f"Error processing document {request.document_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to process document")
+        raise HTTPException(status_code=500, detail="Failed to upload document.")
 
 @app.get("/api/documents/{document_id}/status")
-async def get_document_status(
-    document_id: str,
-    current_user: str = Depends(get_current_user)
-):
-    """Get processing status of a document"""
-    try:
-        status_key = f"doc_status:{document_id}"
-        status = await redis_client.get(status_key)
-        
-        if not status:
-            raise HTTPException(status_code=404, detail="Document not found")
-        
-        return json.loads(status)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting document status: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get document status")
+async def get_document_status(document_id: str):
+    """Retrieves the processing status of a document."""
+    status = await redis_client.get(f"doc_status:{document_id}")
+    if not status:
+        raise HTTPException(status_code=404, detail="Document not found.")
+    return status
 
-# WebSocket endpoint for real-time updates
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
-    await manager.connect(websocket)
+    """Provides a WebSocket endpoint for real-time updates."""
+    await connection_manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await manager.send_personal_message(f"Message: {data}", websocket)
+            await websocket.receive_text()
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        connection_manager.disconnect(websocket)
 
-# Background task for document processing
-async def process_document_async(
-    document_id: str,
-    file_path: str,
-    extraction_type: str,
-    language: str,
-    confidence_threshold: float,
-    user: str
-):
-    """Background task for processing documents"""
+# --- Background Processing Task ---
+async def process_document_in_background(document_id: str, file_path: str, user: str):
+    """
+    The background task that processes the uploaded document.
+    It updates the status in Redis and broadcasts updates via WebSockets.
+    """
+    status_key = f"doc_status:{document_id}"
+    
     try:
-        # Update status to processing
-        status_key = f"doc_status:{document_id}"
-        await redis_client.set(status_key, json.dumps({
-            "status": "processing",
-            "progress": 0,
-            "message": "Starting document analysis"
-        }))
+        # 1. Update status to 'processing'
+        await redis_client.set(status_key, {"status": "processing", "progress": 10})
+        await connection_manager.broadcast(json.dumps({"document_id": document_id, "status": "processing"}))
         
-        # Notify via WebSocket
-        await manager.broadcast(json.dumps({
-            "document_id": document_id,
-            "status": "processing",
-            "user": user
-        }))
+        # 2. Analyze with Azure Document Intelligence
+        azure_result = await azure_document_intelligence_service.analyze_document_from_file(file_path)
+        await redis_client.set(status_key, {"status": "processing", "progress": 50})
         
-        # Process with Azure Document Intelligence
-        await redis_client.set(status_key, json.dumps({
-            "status": "processing",
-            "progress": 25,
-            "message": "Analyzing document structure"
-        }))
+        # 3. Enhance with LLM
+        llm_result = await llm_service.enhance_extracted_data(azure_result)
+        await redis_client.set(status_key, {"status": "processing", "progress": 90})
         
-        azure_result = await azure_doc_intelligence.analyze_document_file(
-            file_path,
-            extraction_type=extraction_type,
-            language=language
-        )
-        
-        # Enhance with LLM
-        await redis_client.set(status_key, json.dumps({
-            "status": "processing",
-            "progress": 75,
-            "message": "Enhancing with AI"
-        }))
-        
-        llm_result = await llm_service.enhance_extraction(
-            azure_result,
-            extraction_type=extraction_type,
-            confidence_threshold=confidence_threshold
-        )
-        
-        # Complete processing
+        # 4. Store final result and update status to 'completed'
         final_result = {
             "status": "completed",
-            "progress": 100,
-            "extracted_data": llm_result["data"],
-            "confidence_score": llm_result["confidence"],
+            "data": llm_result.get("data"),
             "processed_at": datetime.utcnow().isoformat()
         }
+        await redis_client.set(f"doc_result:{document_id}", final_result)
+        await redis_client.set(status_key, {"status": "completed", "progress": 100})
+        await connection_manager.broadcast(json.dumps({"document_id": document_id, "status": "completed"}))
         
-        await redis_client.set(status_key, json.dumps(final_result))
+    except Exception as e:
+        logger.error(f"Error processing document {document_id}: {e}")
+        await redis_client.set(status_key, {"status": "failed", "error": str(e)})
+        await connection_manager.broadcast(json.dumps({"document_id": document_id, "status": "failed"}))
         
-        # Notify completion
-        await manager.broadcast(json.dumps({
-            "document_id": document_id,
-            "status": "completed",
-            "user": user
-        }))
-        
-        # Clean up temporary file
+    finally:
+        # Clean up the temporary file
         if os.path.exists(file_path):
             os.remove(file_path)
-            
-    except Exception as e:
-        logger.error(f"Error in background processing: {e}")
-        await redis_client.set(status_key, json.dumps({
-            "status": "failed",
-            "error": str(e),
-            "failed_at": datetime.utcnow().isoformat()
-        }))
-
-# Metrics endpoint for monitoring
-@app.get("/metrics")
-async def get_metrics():
-    """Prometheus metrics endpoint"""
-    # Implementation would return Prometheus-formatted metrics
-    return {"metrics": "# Prometheus metrics would be here"}
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.ENVIRONMENT == "development",
-        workers=settings.WORKERS if settings.ENVIRONMENT == "production" else 1
-    )
