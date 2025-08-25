@@ -1,5 +1,4 @@
 <div align="center">
-<img src="[https://user-images.githubusercontent.com/80155111/285848522-5b37452a-289a-47e6-a2b1-5b39c6e9b068.png](https://www.leewayhertz.com/intelligent-document-processing-idp/](https://d3lkc3n5th01x7.cloudfront.net/wp-content/uploads/2023/05/25055959/Intelligent-Document-Processing-IDP-Banner.svg)" alt="Project Banner" width="800"/>
 
 # LLM-Powered Document Intelligence System
 
