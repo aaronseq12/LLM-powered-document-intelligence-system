@@ -7,9 +7,6 @@ An enterprise-grade platform for intelligent document processing, leveraging Azu
 </div>
 
 <p align="center">
-  <a href="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/actions/workflows/ci-cd.yml">
-    <img src="https://github.com/aaronseq12/LLM-powered-document-intelligence-system/actions/workflows/ci-cd.yml/badge.svg" alt="CI/CD Status">
-  </a>
   <a href="https://codecov.io/gh/aaronseq12/LLM-powered-document-intelligence-system">
     <img src="https://codecov.io/gh/aaronseq12/LLM-powered-document-intelligence-system/branch/main/graph/badge.svg" alt="Coverage">
   </a>
@@ -287,11 +284,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ⭐ **Star this repo if you find it useful!**
 
-Made with ❤️ by the Document Intelligence Team
+Made with ❤️ by the Aaron
 
 </div>
-```
-
-This is the complete markdown code for your README.md file. Save it as `README.md` in your repository root directory.
-
-[1](https://www.google.com/search?q=https%3A%2F%2Fuser-images.githubusercontent.com%2F80155111%2F285848522-5b37452a-289a-47e6-a2b1-5b39)
