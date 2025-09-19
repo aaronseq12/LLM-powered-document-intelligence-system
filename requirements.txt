@@ -1,23 +1,18 @@
-# ==============================================================================
-# Python Dependencies for the LLM Document Intelligence System
-#
-# This file lists all the Python packages required by the application.
-# It is used by `pip` to install the dependencies.
-# ==============================================================================
-
 # --- Core Web Framework ---
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+fastapi==0.110.0
+uvicorn[standard]==0.23.2
 gunicorn==21.2.0
 
 # --- Authentication and Security ---
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
 
 # --- Database (PostgreSQL + Async) ---
 sqlalchemy[asyncio]==2.0.23
 asyncpg==0.29.0
 alembic==1.13.0
+greenlet==3.0.1
 
 # --- Redis (Caching and Queuing) ---
 redis[hiredis]==5.0.1
@@ -27,11 +22,12 @@ azure-ai-documentintelligence==1.0.0b1
 azure-core==1.29.5
 
 # --- LangChain and LLM Integrations ---
-langchain==0.1.0
-langchain-openai==0.0.2
+langchain==0.1.5
+langchain-openai==0.0.5
+langchain_core==0.1.20
 
 # --- Data Validation ---
-pydantic==2.5.2
+pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # --- Configuration ---
@@ -39,11 +35,13 @@ python-dotenv==1.0.0
 
 # --- Testing ---
 pytest==7.4.3
-pytest-asyncio==0.21.1
+pytest-asyncio==0.23.2
 httpx==0.25.2
+pytest-cov==4.1.0
 
 # --- Development and Code Quality ---
-black==23.11.0
+black==23.12.1
 isort==5.13.2
-flake8==6.1.0
-mypy==1.7.1
+flake8==7.0.0
+mypy==1.8.0
+ruff==0.1.9
