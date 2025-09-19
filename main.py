@@ -128,7 +128,7 @@ async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     # For now, we'll make the user dependency optional to simplify testing
-    # current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
 ):
     """Uploads a document and queues it for asynchronous processing."""
     current_user = "test_user"  # Hardcoded for now

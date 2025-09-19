@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useCallback, useState, useEffect } from 'react';
+import { useDropzone, FileWithPath } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -7,59 +7,58 @@ import {
     Typography,
     Paper,
     CircularProgress,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     LinearProgress,
 } from '@mui/material';
-import { UploadFile, CheckCircle, ErrorOutline } from '@mui/icons-material';
+import { UploadFile as UploadFileIcon } from '@mui/icons-material';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// This is a mock WebSocket hook for demonstration purposes.
-// In a real app, you would connect to your backend WebSocket.
-const useMockSocket = (onMessage) => {
-    // Simulates receiving messages from a WebSocket
-    const simulateMessage = (documentId, status, progress) => {
-        setTimeout(() => {
-            onMessage({ data: JSON.stringify({ document_id: documentId, status, progress }) });
-        }, progress * 50); // Simulate delay
-    };
-
-    return { simulateMessage };
-};
-
+// Define a type for the processing status message from the backend
+interface ProcessingStatus {
+    document_id: string;
+    status: 'processing' | 'analyzing' | 'enhancing' | 'completed' | 'failed';
+    progress: number;
+}
 
 const DocumentUpload = () => {
     const navigate = useNavigate();
-    const [file, setFile] = useState(null);
+    const [file, setFile] = useState<FileWithPath | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
-    const [processingStatus, setProcessingStatus] = useState(null);
+    const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
 
-    const onUploadProgress = (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        setUploadProgress(percentCompleted);
-    };
+    // This useEffect hook establishes a real WebSocket connection
+    useEffect(() => {
+        // Use your machine's local IP or 'localhost' if running locally
+        const ws = new WebSocket(`ws://localhost:8000/ws/client123`);
 
-    const handleProcessingMessage = (event) => {
-        const message = JSON.parse(event.data);
-        setProcessingStatus(message);
+        ws.onmessage = (event) => {
+            const message: ProcessingStatus = JSON.parse(event.data);
+            // Only update status for the currently uploaded file
+            if (processingStatus && message.document_id === processingStatus.document_id) {
+                setProcessingStatus(message);
 
-        if (message.status === 'completed') {
-            toast.success(`Processing complete for ${file.name}!`);
-            setTimeout(() => navigate(`/documents/${message.document_id}`), 1000);
-        } else if (message.status === 'failed') {
-            toast.error(`Processing failed for ${file.name}.`);
-        }
-    };
+                if (message.status === 'completed') {
+                    toast.success(`Processing complete for ${file?.name}!`);
+                    setTimeout(() => navigate(`/documents/${message.document_id}`), 1000);
+                } else if (message.status === 'failed') {
+                    toast.error(`Processing failed for ${file?.name}.`);
+                }
+            }
+        };
 
-    // Replace with your actual WebSocket connection
-    const { simulateMessage } = useMockSocket(handleProcessingMessage);
+        ws.onerror = () => {
+            toast.error("WebSocket connection error.");
+        };
+
+        // Clean up the connection when the component unmounts
+        return () => {
+            ws.close();
+        };
+    }, [processingStatus, file, navigate]);
 
 
-    const onDrop = useCallback((acceptedFiles) => {
+    const onDrop = useCallback((acceptedFiles: FileWithPath[]) => {
         if (acceptedFiles.length > 0) {
             setFile(acceptedFiles[0]);
             setProcessingStatus(null);
@@ -77,26 +76,37 @@ const DocumentUpload = () => {
         if (!file) return;
 
         setIsUploading(true);
+        setUploadProgress(0);
+        setProcessingStatus(null);
+
         const formData = new FormData();
         formData.append('file', file);
 
+        // This is a mock token. In a real app, you'd get this after logging in.
+        const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImV4cCI6MjU1NjM5NTMwMH0.s_v83n-Y6_x46p3fCdt3-M-Q-i5s_x7m_X-B_z_y_Y0";
+
+
         try {
             const response = await axios.post('/api/documents/upload', formData, {
-                onUploadProgress,
-                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        setUploadProgress(percentCompleted);
+                    }
+                },
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${mockToken}` // Add the required token
+                },
             });
 
-            toast.success('File uploaded successfully! Starting processing...');
+            toast.success('File uploaded! Processing has started...');
             const { document_id } = response.data;
-
-            // Simulate WebSocket messages for processing status
-            simulateMessage(document_id, 'processing', 10);
-            simulateMessage(document_id, 'analyzing', 50);
-            simulateMessage(document_id, 'enhancing', 90);
-            simulateMessage(document_id, 'completed', 100);
+            // Set initial processing status to link WebSocket messages to this upload
+            setProcessingStatus({ document_id, status: 'processing', progress: 0 });
 
         } catch (error) {
-            toast.error('Failed to upload file.');
+            toast.error('Failed to upload file. Is the server running?');
             console.error(error);
         } finally {
             setIsUploading(false);
@@ -119,20 +129,20 @@ const DocumentUpload = () => {
                 }}
             >
                 <input {...getInputProps()} />
-                <UploadFile sx={{ fontSize: 60, color: 'grey.500' }} />
+                <UploadFileIcon sx={{ fontSize: 60, color: 'grey.500' }} />
                 <Typography>
                     {isDragActive ? 'Drop the file here ...' : 'Drag & drop a PDF here, or click to select a file'}
                 </Typography>
             </Paper>
 
-            {file && !isUploading && (
+            {file && (
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="h6">Selected File:</Typography>
                     <Typography>{file.name}</Typography>
                 </Box>
             )}
 
-            {isUploading && (
+            {(isUploading || uploadProgress > 0 && uploadProgress < 100) && (
                 <Box sx={{ width: '100%', mb: 2 }}>
                     <Typography>Uploading: {uploadProgress}%</Typography>
                     <LinearProgress variant="determinate" value={uploadProgress} />
@@ -151,7 +161,7 @@ const DocumentUpload = () => {
             <Button
                 variant="contained"
                 onClick={handleUpload}
-                disabled={!file || isUploading || (processingStatus && processingStatus.status !== 'completed')}
+                disabled={!file || isUploading || (!!processingStatus && processingStatus.status !== 'completed' && processingStatus.status !== 'failed')}
                 startIcon={isUploading ? <CircularProgress size={20} /> : null}
             >
                 {isUploading ? 'Uploading...' : 'Upload and Process'}
@@ -161,3 +171,4 @@ const DocumentUpload = () => {
 };
 
 export default DocumentUpload;
+
